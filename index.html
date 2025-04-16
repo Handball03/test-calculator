@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EMI Loan Calculator</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-image: url('background.jpg'); /* Place the image in the same folder */
+      background-size: cover;
+      background-position: center;
+      color: white;
+    }
+
+    .container {
+      background-color: rgba(0, 0, 0, 0.75);
+      max-width: 700px;
+      margin: 5vh auto;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.4);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .slider-group {
+      margin: 20px 0;
+    }
+
+    .slider-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    input[type="range"] {
+      width: 100%;
+    }
+
+    .value {
+      text-align: right;
+      margin-top: 5px;
+    }
+
+    .results {
+      margin-top: 30px;
+      font-size: 1.2em;
+    }
+
+    canvas {
+      margin-top: 30px;
+      width: 100% !important;
+      max-height: 300px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>EMI Loan Calculator</h1>
+
+    <div class="slider-group">
+      <label for="loanAmount">Loan Amount: ₹<span id="loanValue">500000</span></label>
+      <input type="range" id="loanAmount" min="10000" max="1000000" step="1000" value="500000">
+    </div>
+
+    <div class="slider-group">
+      <label for="interestRate">Interest Rate (% per annum): <span id="interestValue">7.5</span>%</label>
+      <input type="range" id="interestRate" min="1" max="15" step="0.1" value="7.5">
+    </div>
+
+    <div class="slider-group">
+      <label for="loanTenure">Loan Tenure: <span id="tenureValue">60</span> months</label>
+      <input type="range" id="loanTenure" min="6" max="360" step="6" value="60">
+    </div>
+
+    <div class="results">
+      <p><strong>Monthly EMI:</strong> ₹<span id="emi"></span></p>
+      <p><strong>Total Interest:</strong> ₹<span id="totalInterest"></span></p>
+      <p><strong>Total Payment:</strong> ₹<span id="totalPayment"></span></p>
+    </div>
+
+    <canvas id="loanChart"></canvas>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const loanAmount = document.getElementById('loanAmount');
+    const interestRate = document.getElementById('interestRate');
+    const loanTenure = document.getElementById('loanTenure');
+    const loanValue = document.getElementById('loanValue');
+    const interestValue = document.getElementById('interestValue');
+    const tenureValue = document.getElementById('tenureValue');
+    const emiEl = document.getElementById('emi');
+    const totalInterestEl = document.getElementById('totalInterest');
+    const totalPaymentEl = document.getElementById('totalPayment');
+    let chart;
+
+    function formatNumber(num) {
+      return parseFloat(num).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+    }
+
+    function calculateEMI() {
+      const principal = parseFloat(loanAmount.value);
+      const annualRate = parseFloat(interestRate.value);
+      const tenure = parseInt(loanTenure.value);
+      const monthlyRate = annualRate / 12 / 100;
+
+      const emi = (principal * monthlyRate * Math.pow(1 + monthlyRate, tenure)) / 
+                  (Math.pow(1 + monthlyRate, tenure) - 1);
+      const totalPayment = emi * tenure;
+      const totalInterest = totalPayment - principal;
+
+      emiEl.textContent = formatNumber(emi);
+      totalInterestEl.textContent = formatNumber(totalInterest);
+      totalPaymentEl.textContent = formatNumber(totalPayment);
+
+      drawChart(principal, totalInterest);
+    }
+
+    function drawChart(principal, interest) {
+      const ctx = document.getElementById('loanChart').getContext('2d');
+      if (chart) chart.destroy();
+      chart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: ['Principal Amount', 'Interest Amount'],
+          datasets: [{
+            data: [principal, interest],
+            backgroundColor: ['#001f3f', '#000000'] // Dark Blue & Black
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { color: '#ffffff' }
+            }
+          }
+        }
+      });
+    }
+
+    loanAmount.addEventListener('input', () => {
+      loanValue.textContent = formatNumber(loanAmount.value);
+      calculateEMI();
+    });
+
+    interestRate.addEventListener('input', () => {
+      interestValue.textContent = interestRate.value;
+      calculateEMI();
+    });
+
+    loanTenure.addEventListener('input', () => {
+      tenureValue.textContent = loanTenure.value;
+      calculateEMI();
+    });
+
+    // Initial calculation
+    calculateEMI();
+  </script>
+</body>
+</html>
